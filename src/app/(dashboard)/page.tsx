@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { Users, BookOpen, CheckCircle, Clock } from 'lucide-react';
-import { Card } from '@/components/ui';
 import { usersApi, testsApi } from '@/lib/api-routes';
 import { User, Question } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 interface Stats {
   totalUsers: number;
@@ -23,6 +23,7 @@ export default function DashboardPage() {
     hardQuestions: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,108 +52,274 @@ export default function DashboardPage() {
 
   const statCards = [
     {
-      title: 'Total Users',
+      title: 'Tổng người dùng',
       value: stats.totalUsers,
       icon: Users,
-      color: 'bg-blue-500',
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     },
     {
-      title: 'Total Questions',
+      title: 'Tổng câu hỏi',
       value: stats.totalQuestions,
       icon: BookOpen,
-      color: 'bg-green-500',
+      gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
     },
     {
-      title: 'Easy Questions',
+      title: 'Câu hỏi dễ',
       value: stats.easyQuestions,
       icon: CheckCircle,
-      color: 'bg-emerald-500',
+      gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     },
     {
-      title: 'Medium Questions',
+      title: 'Câu hỏi trung bình',
       value: stats.mediumQuestions,
       icon: Clock,
-      color: 'bg-yellow-500',
+      gradient: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
     },
     {
-      title: 'Hard Questions',
+      title: 'Câu hỏi khó',
       value: stats.hardQuestions,
       icon: BookOpen,
-      color: 'bg-red-500',
+      gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
     },
   ];
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">Overview of your English Exam system</p>
+    <div style={{ padding: '24px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#111827' }}>Dashboard</h1>
+        <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Tổng quan hệ thống English Quiz</p>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '256px' }}>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
           {statCards.map((stat) => (
-            <Card key={stat.title} className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${stat.color}`}>
-                <stat.icon className="w-6 h-6 text-white" />
+            <div
+              key={stat.title}
+              style={{
+                background: 'white',
+                borderRadius: '16px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                padding: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                transition: 'all 0.2s',
+              }}
+            >
+              <div
+                style={{
+                  padding: '14px',
+                  borderRadius: '14px',
+                  background: stat.gradient,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                }}
+              >
+                <stat.icon style={{ width: '24px', height: '24px', color: 'white' }} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p style={{ fontSize: '13px', color: '#6b7280' }}>{stat.title}</p>
+                <p style={{ fontSize: '26px', fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>{stat.value}</p>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <Card title="System Features">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>User Authentication & Authorization</span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px', marginTop: '24px' }}>
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '20px 24px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            }}
+          >
+            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'white' }}>Tính năng hệ thống</h2>
+          </div>
+          <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 16px',
+                background: '#f0fdf4',
+                borderRadius: '10px',
+                borderLeft: '3px solid #22c55e',
+              }}
+            >
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }}></div>
+              <span style={{ fontSize: '14px', color: '#166534', fontWeight: 500 }}>Xác thực và phân quyền người dùng</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Role-based Access Control (Admin/User)</span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 16px',
+                background: '#f0fdf4',
+                borderRadius: '10px',
+                borderLeft: '3px solid #22c55e',
+              }}
+            >
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }}></div>
+              <span style={{ fontSize: '14px', color: '#166534', fontWeight: 500 }}>Phân quyền theo vai trò (Admin/User)</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>English Test Question Management</span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 16px',
+                background: '#f0fdf4',
+                borderRadius: '10px',
+                borderLeft: '3px solid #22c55e',
+              }}
+            >
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }}></div>
+              <span style={{ fontSize: '14px', color: '#166534', fontWeight: 500 }}>Quản lý câu hỏi thi tiếng Anh</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Multiple Choice Questions Support</span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 16px',
+                background: '#f0fdf4',
+                borderRadius: '10px',
+                borderLeft: '3px solid #22c55e',
+              }}
+            >
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }}></div>
+              <span style={{ fontSize: '14px', color: '#166534', fontWeight: 500 }}>Hỗ trợ câu hỏi trắc nghiệm đa dạng</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Three Difficulty Levels (Easy/Medium/Hard)</span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 16px',
+                background: '#f0fdf4',
+                borderRadius: '10px',
+                borderLeft: '3px solid #22c55e',
+              }}
+            >
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }}></div>
+              <span style={{ fontSize: '14px', color: '#166534', fontWeight: 500 }}>Ba mức độ khó (Dễ/Trung bình/Khó)</span>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card title="Quick Actions">
-          <div className="grid grid-cols-2 gap-4">
-            <a
-              href="/users"
-              className="flex flex-col items-center gap-2 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors"
-            >
-              <Users className="w-8 h-8 text-blue-600" />
-              <span className="font-medium text-blue-900">Manage Users</span>
-            </a>
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '20px 24px',
+              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+            }}
+          >
+            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'white' }}>Thao tác nhanh</h2>
+          </div>
+          <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            {user?.role === 'admin' && (
+              <a
+                href="/users"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '24px 16px',
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                  borderRadius: '14px',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(99, 102, 241, 0.2)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '14px',
+                    background: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.15)',
+                  }}
+                >
+                  <Users style={{ width: '28px', height: '28px', color: '#6366f1' }} />
+                </div>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#4338ca' }}>Quản lý User</span>
+              </a>
+            )}
             <a
               href="/tests"
-              className="flex flex-col items-center gap-2 p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '24px 16px',
+                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                borderRadius: '14px',
+                textDecoration: 'none',
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(34, 197, 94, 0.2)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              <BookOpen className="w-8 h-8 text-green-600" />
-              <span className="font-medium text-green-900">Manage Tests</span>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '14px',
+                  background: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(34, 197, 94, 0.15)',
+                }}
+              >
+                <BookOpen style={{ width: '28px', height: '28px', color: '#22c55e' }} />
+              </div>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#166534' }}>Thi tiếng Anh</span>
             </a>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

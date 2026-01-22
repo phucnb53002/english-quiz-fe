@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Search } from 'lucide-react';
-import { Button, Card, Modal, Table } from '@/components/ui';
 import { testsApi } from '@/lib/api-routes';
 import { Question, User } from '@/types';
 import { useToast } from '@/components/ToastProvider';
@@ -32,7 +31,7 @@ export default function TestsPage() {
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  
+
   const [formData, setFormData] = useState<QuestionFormData>(initialFormState);
   const [optionList, setOptionList] = useState<string[]>(['', '']);
 
@@ -43,7 +42,7 @@ export default function TestsPage() {
       const data = await testsApi.getAll();
       setQuestions(data);
     } catch {
-      addToast('Failed to fetch questions', 'error');
+      addToast('Không thể tải danh sách câu hỏi', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -61,16 +60,16 @@ export default function TestsPage() {
     const errors: Record<string, string> = {};
 
     if (!formData.content || formData.content.length < 10) {
-      errors.content = 'Question must be at least 10 characters';
+      errors.content = 'Câu hỏi phải có ít nhất 10 ký tự';
     }
 
-    const validOptions = optionList.filter(opt => opt.trim() !== '');
+    const validOptions = optionList.filter((opt) => opt.trim() !== '');
     if (validOptions.length < 2) {
-      errors.options = 'At least 2 options are required';
+      errors.options = 'Cần ít nhất 2 đáp án';
     }
 
     if (formData.correctAnswer < 0 || formData.correctAnswer >= validOptions.length) {
-      errors.correctAnswer = 'Please select a valid correct answer';
+      errors.correctAnswer = 'Vui lòng chọn đáp án đúng hợp lệ';
     }
 
     setFormErrors(errors);
@@ -118,16 +117,16 @@ export default function TestsPage() {
     try {
       if (editingQuestion) {
         await testsApi.update(editingQuestion._id, submitData);
-        addToast('Question updated successfully', 'success');
+        addToast('Cập nhật câu hỏi thành công', 'success');
       } else {
         await testsApi.create(submitData);
-        addToast('Question created successfully', 'success');
+        addToast('Tạo câu hỏi thành công', 'success');
       }
       closeModal();
       fetchQuestions();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      addToast(err.response?.data?.message || 'Operation failed', 'error');
+      addToast(err.response?.data?.message || 'Thao tác thất bại', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -138,12 +137,12 @@ export default function TestsPage() {
 
     try {
       await testsApi.delete(deleteConfirm._id);
-      addToast('Question deleted successfully', 'success');
+      addToast('Xóa câu hỏi thành công', 'success');
       setDeleteConfirm(null);
       fetchQuestions();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      addToast(err.response?.data?.message || 'Delete failed', 'error');
+      addToast(err.response?.data?.message || 'Xóa thất bại', 'error');
     }
   };
 
@@ -177,251 +176,741 @@ export default function TestsPage() {
     return matchesSearch && matchesLevel;
   });
 
-  const columns = [
-    {
-      key: 'content',
-      header: 'Question',
-      render: (q: Question) => (
-        <div className="max-w-md truncate">{q.content}</div>
-      ),
-    },
-    {
-      key: 'options',
-      header: 'Options',
-      render: (q: Question) => (
-        <div className="flex gap-1">
-          {q.options.map((opt, idx) => (
-            <span
-              key={idx}
-              className={`px-2 py-0.5 rounded text-xs ${
-                idx === q.correctAnswer
-                  ? 'bg-green-100 text-green-800 font-medium'
-                  : 'bg-gray-100 text-gray-600'
-              }`}
-            >
-              {String.fromCharCode(65 + idx)}
-            </span>
-          ))}
-        </div>
-      ),
-    },
-    {
-      key: 'level',
-      header: 'Level',
-      render: (q: Question) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            q.level === 'easy'
-              ? 'bg-green-100 text-green-800'
-              : q.level === 'medium'
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-red-100 text-red-800'
-          }`}
-        >
-          {q.level}
-        </span>
-      ),
-    },
-    {
-      key: 'createdAt',
-      header: 'Created',
-      render: (q: Question) => new Date(q.createdAt).toLocaleDateString(),
-    },
-  ];
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'easy':
+        return { bg: '#dcfce7', color: '#166534' };
+      case 'medium':
+        return { bg: '#fef9c3', color: '#854d0e' };
+      case 'hard':
+        return { bg: '#fee2e2', color: '#991b1b' };
+      default:
+        return { bg: '#f3f4f6', color: '#374151' };
+    }
+  };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">English Test Questions</h1>
-        <p className="text-gray-500">Manage English test questions and answers</p>
+    <div style={{ padding: '24px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#111827' }}>
+          Quản lý câu hỏi thi
+        </h1>
+        <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
+          Tạo và quản lý câu hỏi trắc nghiệm tiếng Anh
+        </p>
       </div>
 
-      <Card className="mb-6">
-        <div className="flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="flex gap-4 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div
+        style={{
+          background: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          padding: '20px',
+          marginBottom: '24px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', flex: 1 }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '250px', maxWidth: '400px' }}>
+              <Search
+                style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '20px',
+                  height: '20px',
+                  color: '#9ca3af',
+                }}
+              />
               <input
                 type="text"
-                placeholder="Search questions..."
+                placeholder="Tìm kiếm câu hỏi..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px 12px 44px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#22c55e';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
             </div>
             <select
               value={levelFilter}
               onChange={(e) => setLevelFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{
+                padding: '12px 16px',
+                border: '1px solid #e5e7eb',
+                borderRadius: '10px',
+                fontSize: '14px',
+                background: 'white',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
             >
-              <option value="all">All Levels</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
+              <option value="all">Tất cả mức độ</option>
+              <option value="easy">Dễ</option>
+              <option value="medium">Trung bình</option>
+              <option value="hard">Khó</option>
             </select>
           </div>
           {currentUser?.role === 'admin' && (
-            <Button onClick={openCreateModal}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Question
-            </Button>
+            <button
+              onClick={openCreateModal}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 20px',
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <Plus style={{ width: '18px', height: '18px' }} />
+              Thêm câu hỏi
+            </button>
           )}
         </div>
-      </Card>
+      </div>
 
-      <Card
-        title="Questions"
-        actions={
-          <span className="text-sm text-gray-500">
-            {filteredQuestions.length} questions
-          </span>
-        }
+      <div
+        style={{
+          background: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          overflow: 'hidden',
+        }}
       >
-        <Table
-          data={filteredQuestions}
-          columns={columns}
-          onEdit={currentUser?.role === 'admin' ? openEditModal : undefined}
-          onDelete={
-            currentUser?.role === 'admin' ? (q) => setDeleteConfirm(q) : undefined
-          }
-        />
-      </Card>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title={editingQuestion ? 'Edit Question' : 'Create Question'}
-        size="lg"
-      >
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Question Content
-            </label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Enter your question..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-            />
-            {formErrors.content && (
-              <p className="mt-1 text-sm text-red-600">{formErrors.content}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Answer Options
-            </label>
-            <div className="space-y-2">
-              {optionList.map((option, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, correctAnswer: index })}
-                    className={`p-2 rounded-lg transition-colors ${
-                      formData.correctAnswer === index
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                    }`}
-                  >
-                    {formData.correctAnswer === index ? (
-                      <span className="w-5 h-5 flex items-center justify-center text-green-600 font-bold">✓</span>
-                    ) : (
-                      <span className="w-5 h-5 flex items-center justify-center text-sm font-medium">
-                        {String.fromCharCode(65 + index)}
-                      </span>
-                    )}
-                  </button>
-                  <input
-                    type="text"
-                    value={option}
-                    onChange={(e) => updateOption(index, e.target.value)}
-                    placeholder={`Option ${String.fromCharCode(65 + index)}`}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {optionList.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(index)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={addOption}
-              className="mt-2"
-              disabled={optionList.length >= 6}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add Option
-            </Button>
-            {formErrors.options && (
-              <p className="mt-1 text-sm text-red-600">{formErrors.options}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Difficulty Level
-            </label>
-            <select
-              value={formData.level}
-              onChange={(e) => setFormData({ ...formData, level: e.target.value as 'easy' | 'medium' | 'hard' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="secondary" onClick={closeModal}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} isLoading={isSubmitting}>
-              {editingQuestion ? 'Update' : 'Create'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        title="Delete Question"
-        size="sm"
-      >
-        <p className="text-gray-600 mb-6">
-          Are you sure you want to delete this question? This action cannot be
-          undone.
-        </p>
-        <div className="bg-gray-50 p-3 rounded-lg mb-6">
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {deleteConfirm?.content}
-          </p>
-        </div>
-        <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setDeleteConfirm(null)}
+        <div
+          style={{
+            padding: '16px 24px',
+            borderBottom: '1px solid #e5e7eb',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: '#f9fafb',
+          }}
+        >
+          <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+            Danh sách câu hỏi
+          </h2>
+          <span
+            style={{
+              fontSize: '13px',
+              color: '#6b7280',
+              background: '#e5e7eb',
+              padding: '4px 12px',
+              borderRadius: '20px',
+            }}
           >
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Delete
-          </Button>
+            {filteredQuestions.length} câu hỏi
+          </span>
         </div>
-      </Modal>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f9fafb' }}>
+                <th
+                  style={{
+                    padding: '14px 24px',
+                    textAlign: 'left',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6b7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    borderBottom: '1px solid #e5e7eb',
+                    minWidth: '300px',
+                  }}
+                >
+                  Câu hỏi
+                </th>
+                <th
+                  style={{
+                    padding: '14px 24px',
+                    textAlign: 'left',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6b7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}
+                >
+                  Đáp án
+                </th>
+                <th
+                  style={{
+                    padding: '14px 24px',
+                    textAlign: 'left',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6b7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}
+                >
+                  Mức độ
+                </th>
+                <th
+                  style={{
+                    padding: '14px 24px',
+                    textAlign: 'left',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6b7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}
+                >
+                  Ngày tạo
+                </th>
+                {currentUser?.role === 'admin' && (
+                  <th
+                    style={{
+                      padding: '14px 24px',
+                      textAlign: 'right',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      borderBottom: '1px solid #e5e7eb',
+                    }}
+                  >
+                    Thao tác
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredQuestions.map((q, index) => {
+                const levelColor = getLevelColor(q.level);
+                return (
+                  <tr
+                    key={q._id}
+                    style={{
+                      borderBottom: '1px solid #e5e7eb',
+                      background: index % 2 === 0 ? 'white' : '#f9fafb',
+                    }}
+                  >
+                    <td style={{ padding: '16px 24px' }}>
+                      <p
+                        style={{
+                          fontSize: '14px',
+                          color: '#111827',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {q.content}
+                      </p>
+                    </td>
+                    <td style={{ padding: '16px 24px' }}>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {q.options.map((opt, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              background: idx === q.correctAnswer ? '#dcfce7' : '#f3f4f6',
+                              color: idx === q.correctAnswer ? '#166534' : '#6b7280',
+                            }}
+                          >
+                            {String.fromCharCode(65 + idx)}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px 24px' }}>
+                      <span
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: 500,
+                          background: levelColor.bg,
+                          color: levelColor.color,
+                        }}
+                      >
+                        {q.level === 'easy' ? 'Dễ' : q.level === 'medium' ? 'Trung bình' : 'Khó'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 24px', color: '#6b7280', fontSize: '14px' }}>
+                      {new Date(q.createdAt).toLocaleDateString('vi-VN')}
+                    </td>
+                    {currentUser?.role === 'admin' && (
+                      <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                          <button
+                            onClick={() => openEditModal(q)}
+                            style={{
+                              padding: '8px 14px',
+                              background: '#f3f4f6',
+                              color: '#374151',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Sửa
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(q)}
+                            style={{
+                              padding: '8px 14px',
+                              background: '#fef2f2',
+                              color: '#dc2626',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+              {filteredQuestions.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={currentUser?.role === 'admin' ? 5 : 4}
+                    style={{
+                      padding: '48px',
+                      textAlign: 'center',
+                      color: '#9ca3af',
+                    }}
+                  >
+                    Không có dữ liệu câu hỏi
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {isModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            zIndex: 50,
+          }}
+          onClick={closeModal}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid #e5e7eb',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827' }}>
+                {editingQuestion ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới'}
+              </h2>
+              <button
+                onClick={closeModal}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: '#f3f4f6',
+                  color: '#6b7280',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#374151',
+                    marginBottom: '8px',
+                  }}
+                >
+                  Nội dung câu hỏi
+                </label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  placeholder="Nhập câu hỏi..."
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px',
+                    border: formErrors.content ? '#ef4444' : '#d1d5db',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    minHeight: '100px',
+                    resize: 'vertical',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                  }}
+                />
+                {formErrors.content && (
+                  <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>
+                    {formErrors.content}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#374151',
+                    marginBottom: '12px',
+                  }}
+                >
+                  Các đáp án (chọn đáp án đúng bằng cách bấm vào)
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {optionList.map((option, index) => (
+                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, correctAnswer: index })}
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          background:
+                            formData.correctAnswer === index ? '#dcfce7' : '#f3f4f6',
+                          color: formData.correctAnswer === index ? '#16a34a' : '#9ca3af',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {formData.correctAnswer === index ? (
+                          <span style={{ color: '#16a34a' }}>✓</span>
+                        ) : (
+                          String.fromCharCode(65 + index)
+                        )}
+                      </button>
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => updateOption(index, e.target.value)}
+                        placeholder={`Đáp án ${String.fromCharCode(65 + index)}`}
+                        style={{
+                          flex: 1,
+                          padding: '12px 16px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '10px',
+                          fontSize: '14px',
+                          outline: 'none',
+                        }}
+                      />
+                      {optionList.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => removeOption(index)}
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: '#fef2f2',
+                            color: '#dc2626',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Trash2 style={{ width: '18px', height: '18px' }} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={addOption}
+                  disabled={optionList.length >= 6}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginTop: '12px',
+                    padding: '10px 16px',
+                    background: 'transparent',
+                    color: '#22c55e',
+                    border: '1px dashed #22c55e',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: optionList.length >= 6 ? 'not-allowed' : 'pointer',
+                    opacity: optionList.length >= 6 ? 0.5 : 1,
+                  }}
+                >
+                  <Plus style={{ width: '16px', height: '16px' }} />
+                  Thêm đáp án
+                </button>
+                {formErrors.options && (
+                  <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>
+                    {formErrors.options}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#374151',
+                    marginBottom: '8px',
+                  }}
+                >
+                  Mức độ
+                </label>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {(['easy', 'medium', 'hard'] as const).map((level) => {
+                    const colors = getLevelColor(level);
+                    return (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, level })}
+                        style={{
+                          flex: 1,
+                          padding: '12px 16px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          background: formData.level === level ? colors.bg : '#f3f4f6',
+                          color: formData.level === level ? colors.color : '#6b7280',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          border: formData.level === level ? `2px solid ${colors.color}` : '2px solid transparent',
+                        }}
+                      >
+                        {level === 'easy' ? 'Dễ' : level === 'medium' ? 'Trung bình' : 'Khó'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px' }}>
+                <button
+                  onClick={closeModal}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#f3f4f6',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 24px',
+                    background: isSubmitting
+                      ? '#94a3b8'
+                      : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isSubmitting && (
+                    <svg className="animate-spin" style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  )}
+                  {editingQuestion ? 'Cập nhật' : 'Tạo mới'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            zIndex: 50,
+          }}
+          onClick={() => setDeleteConfirm(null)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '400px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: '24px', textAlign: 'center' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  background: '#fef2f2',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                }}
+              >
+                <Trash2 style={{ width: '28px', height: '28px', color: '#dc2626' }} />
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>
+                Xóa câu hỏi
+              </h3>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
+                Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác.
+              </p>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#f3f4f6',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleDelete}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

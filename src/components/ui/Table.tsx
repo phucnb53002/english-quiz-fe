@@ -15,50 +15,119 @@ interface TableProps<T> {
 
 export function Table<T extends { _id: string }>({ data, columns, onEdit, onDelete }: TableProps<T>) {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse' }}>
+        <thead style={{ background: '#f9fafb' }}>
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                style={{
+                  padding: '12px 24px',
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
               >
                 {col.header}
               </th>
             ))}
             {(onEdit || onDelete) && (
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+              <th
+                style={{
+                  padding: '12px 24px',
+                  textAlign: 'right',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Thao tác
               </th>
             )}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody style={{ background: 'white' }}>
           {data.map((item) => (
-            <tr key={item._id} className="hover:bg-gray-50 transition-colors">
+            <tr
+              key={item._id}
+              style={{ borderBottom: '1px solid #e5e7eb' }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = '#f9fafb';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'white';
+              }}
+            >
               {columns.map((col) => (
-                <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td
+                  key={col.key}
+                  style={{
+                    padding: '16px 24px',
+                    whiteSpace: 'nowrap',
+                    fontSize: '14px',
+                    color: '#111827',
+                  }}
+                >
                   {col.render ? col.render(item) : (item as Record<string, unknown>)[col.key] as ReactNode}
                 </td>
               ))}
               {(onEdit || onDelete) && (
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex justify-end gap-2">
+                <td
+                  style={{
+                    padding: '16px 24px',
+                    whiteSpace: 'nowrap',
+                    textAlign: 'right',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                     {onEdit && (
                       <button
                         onClick={() => onEdit(item)}
-                        className="text-blue-600 hover:text-blue-900 font-medium"
+                        style={{
+                          color: '#2563eb',
+                          background: 'transparent',
+                          border: 'none',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.color = '#1d4ed8';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.color = '#2563eb';
+                        }}
                       >
-                        Edit
+                        Sửa
                       </button>
                     )}
                     {onDelete && (
                       <button
                         onClick={() => onDelete(item)}
-                        className="text-red-600 hover:text-red-900 font-medium"
+                        style={{
+                          color: '#dc2626',
+                          background: 'transparent',
+                          border: 'none',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.color = '#b91c1c';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.color = '#dc2626';
+                        }}
                       >
-                        Delete
+                        Xóa
                       </button>
                     )}
                   </div>
@@ -69,7 +138,9 @@ export function Table<T extends { _id: string }>({ data, columns, onEdit, onDele
         </tbody>
       </table>
       {data.length === 0 && (
-        <div className="text-center py-8 text-gray-500">No data available</div>
+        <div style={{ textAlign: 'center', padding: '32px', color: '#6b7280' }}>
+          Không có dữ liệu
+        </div>
       )}
     </div>
   );

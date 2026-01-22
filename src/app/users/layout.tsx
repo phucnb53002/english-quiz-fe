@@ -1,12 +1,10 @@
-'use client';
-
 import { ReactNode } from 'react';
 import { Providers } from '../providers';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 
-export default function DashboardLayout({
+export default function UsersLayout({
   children,
 }: {
   children: ReactNode;
