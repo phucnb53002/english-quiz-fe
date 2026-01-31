@@ -4,7 +4,7 @@ import { AdminRoute } from '@/components/AdminRoute';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 
-export default function TestsLayout({
+export default function ExamsLayout({
   children,
 }: {
   children: ReactNode;

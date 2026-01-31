@@ -1,17 +1,17 @@
 import { ReactNode } from 'react';
 import { Providers } from '../providers';
-import { AdminRoute } from '@/components/AdminRoute';
+import { UserRoute } from '@/components/UserRoute';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 
-export default function TestsLayout({
+export default function QuizLayout({
   children,
 }: {
   children: ReactNode;
 }) {
   return (
     <Providers>
-      <AdminRoute>
+      <UserRoute>
         <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
           <Sidebar />
           <div style={{ flex: 1, marginLeft: '256px' }}>
@@ -21,7 +21,7 @@ export default function TestsLayout({
             </main>
           </div>
         </div>
-      </AdminRoute>
+      </UserRoute>
     </Providers>
   );
 }

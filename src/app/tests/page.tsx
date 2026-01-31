@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Search } from 'lucide-react';
-import { testsApi } from '@/lib/api-routes';
-import { Question, User } from '@/types';
+import { Plus, Trash2, Search, FolderOpen, ChevronDown, ChevronRight, BookOpen, Edit } from 'lucide-react';
+import { testsApi, examsApi } from '@/lib/api-routes';
+import { Question, User, Exam } from '@/types';
 import { useToast } from '@/components/ToastProvider';
 
 interface QuestionFormData {
+  examId: string;
   content: string;
   options: string[];
   correctAnswer: number;
@@ -14,6 +15,7 @@ interface QuestionFormData {
 }
 
 const initialFormState: QuestionFormData = {
+  examId: '',
   content: '',
   options: ['', ''],
   correctAnswer: 0,
@@ -21,13 +23,14 @@ const initialFormState: QuestionFormData = {
 };
 
 export default function TestsPage() {
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [exams, setExams] = useState<(Exam & { questionCount: number; questions?: Question[] })[]>([]);
+  const [expandedExams, setExpandedExams] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<Question | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ question: Question; examId: string } | null>(null);
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -37,14 +40,25 @@ export default function TestsPage() {
 
   const { addToast } = useToast();
 
-  const fetchQuestions = async () => {
+  const fetchExams = async () => {
     try {
-      const data = await testsApi.getAll();
-      setQuestions(data);
+      const data = await examsApi.getAll();
+      setExams(data.map(exam => ({ ...exam, questions: [] })));
     } catch {
-      addToast('Không thể tải danh sách câu hỏi', 'error');
+      addToast('Không thể tải danh sách bài thi', 'error');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchQuestionsForExam = async (examId: string) => {
+    try {
+      const data = await examsApi.getOne(examId);
+      setExams(prev => prev.map(exam => 
+        exam._id === examId ? { ...exam, questions: data.questions } : exam
+      ));
+    } catch {
+      addToast('Không thể tải câu hỏi', 'error');
     }
   };
 
@@ -53,11 +67,28 @@ export default function TestsPage() {
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     }
-    fetchQuestions();
+    fetchExams();
   }, []);
+
+  const toggleExam = (examId: string) => {
+    setExpandedExams(prev => {
+      const newState = { ...prev };
+      if (newState[examId]) {
+        delete newState[examId];
+      } else {
+        newState[examId] = true;
+        fetchQuestionsForExam(examId);
+      }
+      return newState;
+    });
+  };
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
+
+    if (!formData.examId) {
+      errors.examId = 'Vui lòng chọn bài thi';
+    }
 
     if (!formData.content || formData.content.length < 10) {
       errors.content = 'Câu hỏi phải có ít nhất 10 ký tự';
@@ -76,9 +107,9 @@ export default function TestsPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = (examId?: string) => {
     setEditingQuestion(null);
-    setFormData(initialFormState);
+    setFormData({ ...initialFormState, examId: examId || '' });
     setOptionList(['', '']);
     setFormErrors({});
     setIsModalOpen(true);
@@ -87,6 +118,7 @@ export default function TestsPage() {
   const openEditModal = (question: Question) => {
     setEditingQuestion(question);
     setFormData({
+      examId: question.examId || '',
       content: question.content,
       options: question.options,
       correctAnswer: question.correctAnswer,
@@ -123,7 +155,8 @@ export default function TestsPage() {
         addToast('Tạo câu hỏi thành công', 'success');
       }
       closeModal();
-      fetchQuestions();
+      fetchQuestionsForExam(formData.examId);
+      fetchExams();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       addToast(err.response?.data?.message || 'Thao tác thất bại', 'error');
@@ -136,10 +169,11 @@ export default function TestsPage() {
     if (!deleteConfirm) return;
 
     try {
-      await testsApi.delete(deleteConfirm._id);
+      await testsApi.delete(deleteConfirm.question._id);
       addToast('Xóa câu hỏi thành công', 'success');
       setDeleteConfirm(null);
-      fetchQuestions();
+      fetchQuestionsForExam(deleteConfirm.examId);
+      fetchExams();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       addToast(err.response?.data?.message || 'Xóa thất bại', 'error');
@@ -168,14 +202,6 @@ export default function TestsPage() {
     setOptionList(newOptions);
   };
 
-  const filteredQuestions = questions.filter((q) => {
-    const matchesSearch =
-      q.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.options.some((opt) => opt.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesLevel = levelFilter === 'all' || q.level === levelFilter;
-    return matchesSearch && matchesLevel;
-  });
-
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'easy':
@@ -189,6 +215,16 @@ export default function TestsPage() {
     }
   };
 
+  const getFilteredQuestions = (questions: Question[]) => {
+    return questions.filter(q => {
+      const matchesSearch =
+        q.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        q.options.some((opt) => opt.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesLevel = levelFilter === 'all' || q.level === levelFilter;
+      return matchesSearch && matchesLevel;
+    });
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '24px' }}>
@@ -196,7 +232,7 @@ export default function TestsPage() {
           Quản lý câu hỏi thi
         </h1>
         <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
-          Tạo và quản lý câu hỏi trắc nghiệm tiếng Anh
+          Tạo và quản lý câu hỏi trắc nghiệm tiếng Anh theo từng bài thi
         </p>
       </div>
 
@@ -243,15 +279,6 @@ export default function TestsPage() {
                   borderRadius: '10px',
                   fontSize: '14px',
                   outline: 'none',
-                  transition: 'all 0.2s',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#22c55e';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e5e7eb';
-                  e.target.style.boxShadow = 'none';
                 }}
               />
             </div>
@@ -274,271 +301,235 @@ export default function TestsPage() {
               <option value="hard">Khó</option>
             </select>
           </div>
-          {currentUser?.role === 'admin' && (
-            <button
-              onClick={openCreateModal}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '12px 20px',
-                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.4)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <Plus style={{ width: '18px', height: '18px' }} />
-              Thêm câu hỏi
-            </button>
-          )}
         </div>
       </div>
 
-      <div
-        style={{
-          background: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          overflow: 'hidden',
-        }}
-      >
+      {isLoading ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : exams.length === 0 ? (
         <div
           style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid #e5e7eb',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: '#f9fafb',
+            background: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            padding: '48px',
+            textAlign: 'center',
           }}
         >
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
-            Danh sách câu hỏi
+          <FolderOpen style={{ width: '64px', height: '64px', color: '#9ca3af', margin: '0 auto 16px' }} />
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>
+            Chưa có bài thi nào
           </h2>
-          <span
-            style={{
-              fontSize: '13px',
-              color: '#6b7280',
-              background: '#e5e7eb',
-              padding: '4px 12px',
-              borderRadius: '20px',
-            }}
-          >
-            {filteredQuestions.length} câu hỏi
-          </span>
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>
+            Vui lòng tạo bài thi trước tại trang Quản lý bài thi
+          </p>
         </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {exams.map((exam) => {
+            const isExpanded = expandedExams[exam._id];
+            const filteredQuestions = exam.questions ? getFilteredQuestions(exam.questions) : [];
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f9fafb' }}>
-                <th
+            return (
+              <div
+                key={exam._id}
+                style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
                   style={{
-                    padding: '14px 24px',
-                    textAlign: 'left',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    borderBottom: '1px solid #e5e7eb',
-                    minWidth: '300px',
+                    padding: '16px 20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
                   }}
+                  onClick={() => toggleExam(exam._id)}
                 >
-                  Câu hỏi
-                </th>
-                <th
-                  style={{
-                    padding: '14px 24px',
-                    textAlign: 'left',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    borderBottom: '1px solid #e5e7eb',
-                  }}
-                >
-                  Đáp án
-                </th>
-                <th
-                  style={{
-                    padding: '14px 24px',
-                    textAlign: 'left',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    borderBottom: '1px solid #e5e7eb',
-                  }}
-                >
-                  Mức độ
-                </th>
-                <th
-                  style={{
-                    padding: '14px 24px',
-                    textAlign: 'left',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    borderBottom: '1px solid #e5e7eb',
-                  }}
-                >
-                  Ngày tạo
-                </th>
-                {currentUser?.role === 'admin' && (
-                  <th
-                    style={{
-                      padding: '14px 24px',
-                      textAlign: 'right',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      borderBottom: '1px solid #e5e7eb',
-                    }}
-                  >
-                    Thao tác
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredQuestions.map((q, index) => {
-                const levelColor = getLevelColor(q.level);
-                return (
-                  <tr
-                    key={q._id}
-                    style={{
-                      borderBottom: '1px solid #e5e7eb',
-                      background: index % 2 === 0 ? 'white' : '#f9fafb',
-                    }}
-                  >
-                    <td style={{ padding: '16px 24px' }}>
-                      <p
-                        style={{
-                          fontSize: '14px',
-                          color: '#111827',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {q.content}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <BookOpen style={{ width: '22px', height: '22px', color: 'white' }} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+                        {exam.title}
+                      </h3>
+                      <p style={{ fontSize: '13px', color: '#6b7280' }}>
+                        {exam.questionCount} câu hỏi
                       </p>
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        {q.options.map((opt, idx) => (
-                          <span
-                            key={idx}
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              background: idx === q.correctAnswer ? '#dcfce7' : '#f3f4f6',
-                              color: idx === q.correctAnswer ? '#166534' : '#6b7280',
-                            }}
-                          >
-                            {String.fromCharCode(65 + idx)}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <span
-                        style={{
-                          padding: '6px 14px',
-                          borderRadius: '20px',
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          background: levelColor.bg,
-                          color: levelColor.color,
-                        }}
-                      >
-                        {q.level === 'easy' ? 'Dễ' : q.level === 'medium' ? 'Trung bình' : 'Khó'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px 24px', color: '#6b7280', fontSize: '14px' }}>
-                      {new Date(q.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    {currentUser?.role === 'admin' && (
-                      <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                          <button
-                            onClick={() => openEditModal(q)}
-                            style={{
-                              padding: '8px 14px',
-                              background: '#f3f4f6',
-                              color: '#374151',
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '13px',
-                              fontWeight: 500,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Sửa
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(q)}
-                            style={{
-                              padding: '8px 14px',
-                              background: '#fef2f2',
-                              color: '#dc2626',
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '13px',
-                              fontWeight: 500,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Xóa
-                          </button>
-                        </div>
-                      </td>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openCreateModal(exam._id);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 14px',
+                        background: '#f0fdf4',
+                        color: '#16a34a',
+                        border: '1px solid #22c55e',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Plus style={{ width: '16px', height: '16px' }} />
+                      Thêm câu hỏi
+                    </button>
+                    {isExpanded ? (
+                      <ChevronDown style={{ width: '20px', height: '20px', color: '#6b7280' }} />
+                    ) : (
+                      <ChevronRight style={{ width: '20px', height: '20px', color: '#6b7280' }} />
                     )}
-                  </tr>
-                );
-              })}
-              {filteredQuestions.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={currentUser?.role === 'admin' ? 5 : 4}
-                    style={{
-                      padding: '48px',
-                      textAlign: 'center',
-                      color: '#9ca3af',
-                    }}
-                  >
-                    Không có dữ liệu câu hỏi
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div style={{ borderTop: '1px solid #e5e7eb' }}>
+                    {exam.questions && exam.questions.length > 0 ? (
+                      filteredQuestions.length > 0 ? (
+                        <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                          {filteredQuestions.map((question, index) => {
+                            const levelColor = getLevelColor(question.level);
+                            return (
+                              <div
+                                key={question._id}
+                                style={{
+                                  padding: '16px 20px',
+                                  borderBottom: index < filteredQuestions.length - 1 ? '1px solid #e5e7eb' : 'none',
+                                  display: 'flex',
+                                  alignItems: 'flex-start',
+                                  gap: '16px',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '6px',
+                                    background: '#f3f4f6',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    color: '#6b7280',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {index + 1}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <p style={{ fontSize: '14px', color: '#374151', marginBottom: '8px' }}>
+                                    {question.content}
+                                  </p>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                      {question.options.map((opt, idx) => (
+                                        <span
+                                          key={idx}
+                                          style={{
+                                            padding: '4px 10px',
+                                            borderRadius: '4px',
+                                            fontSize: '12px',
+                                            fontWeight: 500,
+                                            background: idx === question.correctAnswer ? '#dcfce7' : '#f3f4f6',
+                                            color: idx === question.correctAnswer ? '#166534' : '#6b7280',
+                                          }}
+                                        >
+                                          {String.fromCharCode(65 + idx)}
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <span
+                                      style={{
+                                        padding: '4px 10px',
+                                        borderRadius: '20px',
+                                        fontSize: '11px',
+                                        fontWeight: 500,
+                                        background: levelColor.bg,
+                                        color: levelColor.color,
+                                      }}
+                                    >
+                                      {question.level === 'easy' ? 'Dễ' : question.level === 'medium' ? 'Trung bình' : 'Khó'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button
+                                    onClick={() => openEditModal(question)}
+                                    style={{
+                                      padding: '8px 12px',
+                                      background: '#f3f4f6',
+                                      color: '#374151',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      fontSize: '12px',
+                                      fontWeight: 500,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <Edit style={{ width: '14px', height: '14px' }} />
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteConfirm({ question, examId: exam._id })}
+                                    style={{
+                                      padding: '8px 12px',
+                                      background: '#fef2f2',
+                                      color: '#dc2626',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      fontSize: '12px',
+                                      fontWeight: 500,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <Trash2 style={{ width: '14px', height: '14px' }} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{ padding: '24px', textAlign: 'center', color: '#9ca3af' }}>
+                          Không tìm thấy câu hỏi phù hợp
+                        </div>
+                      )
+                    ) : (
+                      <div style={{ padding: '24px', textAlign: 'center' }}>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
+      )}
 
       {isModalOpen && (
         <div
@@ -606,6 +597,46 @@ export default function TestsPage() {
                     marginBottom: '8px',
                   }}
                 >
+                  Bài thi *
+                </label>
+                <select
+                  value={formData.examId}
+                  onChange={(e) => setFormData({ ...formData, examId: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: formErrors.examId ? '#ef4444' : '#d1d5db',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    background: 'white',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">-- Chọn bài thi --</option>
+                  {exams.map((exam) => (
+                    <option key={exam._id} value={exam._id}>
+                      {exam.title}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.examId && (
+                  <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>
+                    {formErrors.examId}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#374151',
+                    marginBottom: '8px',
+                  }}
+                >
                   Nội dung câu hỏi
                 </label>
                 <textarea
@@ -663,7 +694,6 @@ export default function TestsPage() {
                           justifyContent: 'center',
                           fontSize: '14px',
                           fontWeight: 600,
-                          transition: 'all 0.2s',
                         }}
                       >
                         {formData.correctAnswer === index ? (
@@ -763,13 +793,11 @@ export default function TestsPage() {
                           flex: 1,
                           padding: '12px 16px',
                           borderRadius: '10px',
-                          border: 'none',
                           background: formData.level === level ? colors.bg : '#f3f4f6',
                           color: formData.level === level ? colors.color : '#6b7280',
                           fontSize: '14px',
                           fontWeight: 500,
                           cursor: 'pointer',
-                          transition: 'all 0.2s',
                           border: formData.level === level ? `2px solid ${colors.color}` : '2px solid transparent',
                         }}
                       >
@@ -816,10 +844,7 @@ export default function TestsPage() {
                   }}
                 >
                   {isSubmitting && (
-                    <svg className="animate-spin" style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   )}
                   {editingQuestion ? 'Cập nhật' : 'Tạo mới'}
                 </button>

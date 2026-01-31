@@ -113,8 +113,6 @@ export default function ProfilePage() {
           <p
             style={{
               fontSize: '14px',
-              color: '#6b7280',
-              textTransform: 'capitalize',
               background: user.role === 'admin' ? '#f3e8ff' : '#dbeafe',
               padding: '6px 16px',
               borderRadius: '20px',

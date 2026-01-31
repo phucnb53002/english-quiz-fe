@@ -281,7 +281,7 @@ export default function DashboardPage() {
               </a>
             )}
             <a
-              href="/tests"
+              href={user?.role === 'admin' ? '/tests' : '/quiz'}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -316,7 +316,9 @@ export default function DashboardPage() {
               >
                 <BookOpen style={{ width: '28px', height: '28px', color: '#22c55e' }} />
               </div>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#166534' }}>Thi tiếng Anh</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#166534' }}>
+                {user?.role === 'admin' ? 'Quản lý câu hỏi' : 'Thi tiếng Anh'}
+              </span>
             </a>
           </div>
         </div>

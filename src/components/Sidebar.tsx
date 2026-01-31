@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, Users, LogOut, LayoutDashboard, UserCog } from 'lucide-react';
+import { BookOpen, Users, LogOut, LayoutDashboard, UserCog, History, FolderOpen } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'English Tests', href: '/tests', icon: BookOpen },
 ];
 
 export function Sidebar() {
@@ -71,24 +70,114 @@ export function Sidebar() {
             </Link>
           );
         })}
-        {user?.role === 'admin' && (
-          <Link
-            href="/users"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              transition: 'all 0.2s',
-              background: pathname === '/users' ? '#2563eb' : 'transparent',
-              color: pathname === '/users' ? 'white' : '#9ca3af',
-              textDecoration: 'none',
-            }}
-          >
-            <UserCog style={{ width: '20px', height: '20px' }} />
-            Quản lý User
-          </Link>
+        {user?.role === 'admin' ? (
+          <>
+            <Link
+              href="/exams"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                transition: 'all 0.2s',
+                background: pathname === '/exams' ? '#2563eb' : 'transparent',
+                color: pathname === '/exams' ? 'white' : '#9ca3af',
+                textDecoration: 'none',
+              }}
+            >
+              <FolderOpen style={{ width: '20px', height: '20px' }} />
+              Bài thi
+            </Link>
+            <Link
+              href="/tests"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                transition: 'all 0.2s',
+                background: pathname === '/tests' ? '#2563eb' : 'transparent',
+                color: pathname === '/tests' ? 'white' : '#9ca3af',
+                textDecoration: 'none',
+              }}
+            >
+              <BookOpen style={{ width: '20px', height: '20px' }} />
+              Câu hỏi
+            </Link>
+            <Link
+              href="/results"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                transition: 'all 0.2s',
+                background: pathname === '/results' ? '#2563eb' : 'transparent',
+                color: pathname === '/results' ? 'white' : '#9ca3af',
+                textDecoration: 'none',
+              }}
+            >
+              <History style={{ width: '20px', height: '20px' }} />
+              Kết quả thi
+            </Link>
+            <Link
+              href="/users"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                transition: 'all 0.2s',
+                background: pathname === '/users' ? '#2563eb' : 'transparent',
+                color: pathname === '/users' ? 'white' : '#9ca3af',
+                textDecoration: 'none',
+              }}
+            >
+              <UserCog style={{ width: '20px', height: '20px' }} />
+              Quản lý User
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/quiz"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                transition: 'all 0.2s',
+                background: pathname === '/quiz' ? '#2563eb' : 'transparent',
+                color: pathname === '/quiz' ? 'white' : '#9ca3af',
+                textDecoration: 'none',
+              }}
+            >
+              <BookOpen style={{ width: '20px', height: '20px' }} />
+              Thi Tiếng Anh
+            </Link>
+            <Link
+              href="/history"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                transition: 'all 0.2s',
+                background: pathname === '/history' ? '#2563eb' : 'transparent',
+                color: pathname === '/history' ? 'white' : '#9ca3af',
+                textDecoration: 'none',
+              }}
+            >
+              <History style={{ width: '20px', height: '20px' }} />
+              Lịch sử thi
+            </Link>
+          </>
         )}
       </nav>
 
