@@ -5,7 +5,6 @@ import {
   Trophy,
   Users,
   CheckCircle,
-  Clock,
   Eye,
   XCircle,
   TrendingUp,
@@ -47,7 +46,7 @@ export default function ResultsPage() {
     };
 
     fetchData();
-  }, []);
+  });
 
   const getScoreColor = (percentage: number) => {
     if (percentage >= 70) return { bg: "#dcfce7", color: "#166534" };
@@ -703,8 +702,6 @@ export default function ResultsPage() {
               >
                 {selectedResult.results.map((item, index) => {
                   const questionContent = getQuestionContent(item.questionId);
-                  const colors = getScoreColor(item.correct ? 100 : 0);
-
                   return (
                     <div
                       key={item.questionId}
