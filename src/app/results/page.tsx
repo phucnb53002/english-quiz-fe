@@ -9,8 +9,8 @@ import {
   XCircle,
   TrendingUp,
 } from "lucide-react";
-import { resultsApi, testsApi } from "@/lib/api-routes";
-import { Result, Question, AdminStats } from "@/types";
+import { resultsApi, testsApi, examsApi } from "@/lib/api-routes";
+import { Result, Question, AdminStats, Exam } from "@/types";
 import { useToast } from "@/components/ToastProvider";
 
 export default function ResultsPage() {
@@ -23,6 +23,7 @@ export default function ResultsPage() {
     topResults: [],
   });
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [exams, setExams] = useState<{ [key: string]: Exam }>({}); // Map examId -> Exam
   const [isLoading, setIsLoading] = useState(true);
   const [selectedResult, setSelectedResult] = useState<Result | null>(null);
   const { addToast } = useToast();
@@ -38,6 +39,25 @@ export default function ResultsPage() {
         setResults(resultsData);
         setStats(statsData);
         setQuestions(questionsData);
+
+        const examIds = Array.from(
+          new Set(questionsData.map((q: Question) => q.examId).filter(Boolean))
+        );
+
+        if (examIds.length > 0) {
+          const examsMap: { [key: string]: Exam } = {};
+          await Promise.all(
+            examIds.map(async (examId) => {
+              try {
+                const examData = await examsApi.getOne(examId as string);
+                examsMap[examId as string] = examData.exam;
+              } catch (err) {
+                console.error(`Failed to fetch exam ${examId}:`, err);
+              }
+            })
+          );
+          setExams(examsMap);
+        }
       } catch {
         addToast("Không thể tải dữ liệu", "error");
       } finally {
@@ -46,7 +66,7 @@ export default function ResultsPage() {
     };
 
     fetchData();
-  });
+  }, []);
 
   const getScoreColor = (percentage: number) => {
     if (percentage >= 70) return { bg: "#dcfce7", color: "#166534" };
@@ -57,6 +77,17 @@ export default function ResultsPage() {
   const getQuestionContent = (questionId: string) => {
     const question = questions.find((q) => q._id === questionId);
     return question?.content || "Câu hỏi đã bị xóa";
+  };
+
+  const getExamTitle = (): string => {
+    if (!selectedResult || selectedResult.results.length === 0) return "";
+
+    const firstQuestionId = selectedResult.results[0].questionId;
+    const firstQuestion = questions.find((q) => q._id === firstQuestionId);
+
+    if (!firstQuestion || !firstQuestion.examId) return "";
+
+    return exams[firstQuestion.examId]?.title || "";
   };
 
   if (isLoading) {
@@ -600,6 +631,11 @@ export default function ResultsPage() {
                     marginTop: "4px",
                   }}
                 >
+                  {getExamTitle() && (
+                    <>
+                      <strong>{getExamTitle()}</strong> •{" "}
+                    </>
+                  )}
                   Người thi: <strong>{selectedResult.userName}</strong> •{" "}
                   {new Date(selectedResult.createdAt).toLocaleString("vi-VN")}
                 </p>
@@ -709,7 +745,9 @@ export default function ResultsPage() {
                         background: item.correct ? "#f0fdf4" : "#fef2f2",
                         borderRadius: "12px",
                         padding: "16px",
-                        borderLeft: `4px solid ${item.correct ? "#22c55e" : "#ef4444"}`,
+                        borderLeft: `4px solid ${
+                          item.correct ? "#22c55e" : "#ef4444"
+                        }`,
                       }}
                     >
                       <div

@@ -1,13 +1,19 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, Users, LogOut, LayoutDashboard, UserCog, History, FolderOpen } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  BookOpen,
+  Users,
+  LogOut,
+  LayoutDashboard,
+  UserCog,
+  History,
+  FolderOpen,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-];
+const navigation = [{ name: "Dashboard", href: "/", icon: LayoutDashboard }];
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -16,128 +22,141 @@ export function Sidebar() {
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.push("/login");
   };
+
+  const filteredNavigation = user?.role === "admin" ? navigation : [];
 
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         left: 0,
         top: 0,
         bottom: 0,
-        width: '256px',
-        background: '#111827',
-        display: 'flex',
-        flexDirection: 'column',
+        width: "256px",
+        background: "#111827",
+        display: "flex",
+        flexDirection: "column",
         zIndex: 50,
       }}
     >
       <div
         style={{
-          height: '64px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '0 16px',
-          borderBottom: '1px solid #1f2937',
+          height: "64px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 16px",
+          borderBottom: "1px solid #1f2937",
         }}
       >
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'white' }}>English Quiz</h1>
+        <h1 style={{ fontSize: "20px", fontWeight: 700, color: "white" }}>
+          English Quiz
+        </h1>
       </div>
 
-      <nav style={{ flex: 1, padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <nav
+        style={{
+          flex: 1,
+          padding: "24px 16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+        }}
+      >
+        {filteredNavigation.map((item) => {
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.name}
               href={item.href}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                background: isActive ? '#2563eb' : 'transparent',
-                color: isActive ? 'white' : '#9ca3af',
-                textDecoration: 'none',
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                background: isActive ? "#2563eb" : "transparent",
+                color: isActive ? "white" : "#9ca3af",
+                textDecoration: "none",
               }}
             >
-              <item.icon style={{ width: '20px', height: '20px' }} />
+              <item.icon style={{ width: "20px", height: "20px" }} />
               {item.name}
             </Link>
           );
         })}
-        {user?.role === 'admin' ? (
+        {user?.role === "admin" ? (
           <>
             <Link
               href="/exams"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                background: pathname === '/exams' ? '#2563eb' : 'transparent',
-                color: pathname === '/exams' ? 'white' : '#9ca3af',
-                textDecoration: 'none',
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                background: pathname === "/exams" ? "#2563eb" : "transparent",
+                color: pathname === "/exams" ? "white" : "#9ca3af",
+                textDecoration: "none",
               }}
             >
-              <FolderOpen style={{ width: '20px', height: '20px' }} />
+              <FolderOpen style={{ width: "20px", height: "20px" }} />
               Bài thi
             </Link>
             <Link
               href="/tests"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                background: pathname === '/tests' ? '#2563eb' : 'transparent',
-                color: pathname === '/tests' ? 'white' : '#9ca3af',
-                textDecoration: 'none',
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                background: pathname === "/tests" ? "#2563eb" : "transparent",
+                color: pathname === "/tests" ? "white" : "#9ca3af",
+                textDecoration: "none",
               }}
             >
-              <BookOpen style={{ width: '20px', height: '20px' }} />
+              <BookOpen style={{ width: "20px", height: "20px" }} />
               Câu hỏi
             </Link>
             <Link
               href="/results"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                background: pathname === '/results' ? '#2563eb' : 'transparent',
-                color: pathname === '/results' ? 'white' : '#9ca3af',
-                textDecoration: 'none',
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                background: pathname === "/results" ? "#2563eb" : "transparent",
+                color: pathname === "/results" ? "white" : "#9ca3af",
+                textDecoration: "none",
               }}
             >
-              <History style={{ width: '20px', height: '20px' }} />
+              <History style={{ width: "20px", height: "20px" }} />
               Kết quả thi
             </Link>
             <Link
               href="/users"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                background: pathname === '/users' ? '#2563eb' : 'transparent',
-                color: pathname === '/users' ? 'white' : '#9ca3af',
-                textDecoration: 'none',
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                background: pathname === "/users" ? "#2563eb" : "transparent",
+                color: pathname === "/users" ? "white" : "#9ca3af",
+                textDecoration: "none",
               }}
             >
-              <UserCog style={{ width: '20px', height: '20px' }} />
+              <UserCog style={{ width: "20px", height: "20px" }} />
               Quản lý User
             </Link>
           </>
@@ -146,78 +165,92 @@ export function Sidebar() {
             <Link
               href="/quiz"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                background: pathname === '/quiz' ? '#2563eb' : 'transparent',
-                color: pathname === '/quiz' ? 'white' : '#9ca3af',
-                textDecoration: 'none',
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                background: pathname === "/quiz" ? "#2563eb" : "transparent",
+                color: pathname === "/quiz" ? "white" : "#9ca3af",
+                textDecoration: "none",
               }}
             >
-              <BookOpen style={{ width: '20px', height: '20px' }} />
+              <BookOpen style={{ width: "20px", height: "20px" }} />
               Thi Tiếng Anh
             </Link>
             <Link
               href="/history"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                background: pathname === '/history' ? '#2563eb' : 'transparent',
-                color: pathname === '/history' ? 'white' : '#9ca3af',
-                textDecoration: 'none',
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                transition: "all 0.2s",
+                background: pathname === "/history" ? "#2563eb" : "transparent",
+                color: pathname === "/history" ? "white" : "#9ca3af",
+                textDecoration: "none",
               }}
             >
-              <History style={{ width: '20px', height: '20px' }} />
+              <History style={{ width: "20px", height: "20px" }} />
               Lịch sử thi
             </Link>
           </>
         )}
       </nav>
 
-      <div style={{ padding: '16px', borderTop: '1px solid #1f2937' }}>
+      <div style={{ padding: "16px", borderTop: "1px solid #1f2937" }}>
         {user && (
-          <div style={{ marginBottom: '16px', padding: '0 12px' }}>
-            <p style={{ fontSize: '12px', color: '#9ca3af' }}>Đã đăng nhập</p>
-            <p style={{ color: 'white', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ marginBottom: "16px", padding: "0 12px" }}>
+            <p style={{ fontSize: "12px", color: "#9ca3af" }}>Đã đăng nhập</p>
+            <p
+              style={{
+                color: "white",
+                fontWeight: 500,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {user.name}
             </p>
-            <p style={{ fontSize: '12px', color: '#6b7280', textTransform: 'capitalize' }}>
-              {user.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
+            <p
+              style={{
+                fontSize: "12px",
+                color: "#6b7280",
+                textTransform: "capitalize",
+              }}
+            >
+              {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
             </p>
           </div>
         )}
         <button
           onClick={handleLogout}
           style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '12px 16px',
-            color: '#9ca3af',
-            background: 'transparent',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "12px 16px",
+            color: "#9ca3af",
+            background: "transparent",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            transition: "all 0.2s",
           }}
           onMouseOver={(e) => {
-            e.currentTarget.style.background = '#1f2937';
-            e.currentTarget.style.color = 'white';
+            e.currentTarget.style.background = "#1f2937";
+            e.currentTarget.style.color = "white";
           }}
           onMouseOut={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = '#9ca3af';
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "#9ca3af";
           }}
         >
-          <LogOut style={{ width: '20px', height: '20px' }} />
+          <LogOut style={{ width: "20px", height: "20px" }} />
           Đăng xuất
         </button>
       </div>
