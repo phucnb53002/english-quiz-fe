@@ -252,33 +252,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div
-            style={{
-              marginTop: '24px',
-              padding: '16px',
-              background: '#f8fafc',
-              borderRadius: '10px',
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <p
-              style={{
-                fontSize: '12px',
-                color: '#64748b',
-                textAlign: 'center',
-                marginBottom: '8px',
-              }}
-            >
-              Tài khoản demo:
-            </p>
-            <p style={{ fontSize: '13px', color: '#334155', textAlign: 'center' }}>
-              Email: <strong>admin@gmail.com</strong>
-            </p>
-            <p style={{ fontSize: '13px', color: '#334155', textAlign: 'center' }}>
-              Mật khẩu: <strong>Admin@123</strong>
-            </p>
-          </div>
-
           <p
             style={{
               marginTop: '24px',
